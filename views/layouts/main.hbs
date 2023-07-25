@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Utkarsh Sharma | Personal Website</title>
+	<title>WEB700</title>
 	<meta charset="UTF-8" />
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
@@ -18,29 +18,20 @@
 		
 		<div class="collapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav mr-auto">
-				<li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-				<li class="nav-item active"><a class="nav-link" href="/about">About</a></li>
-				<li class="nav-item"><a class="nav-link" href="/htmlDemo">htmlDemo</a></li>
-				<li class="nav-item"><a class="nav-link" href="/students/add">Add Student</a></li>
+				{{#navLink "/"}}Home{{/navLink}}
+				{{#navLink "/about"}}About{{/navLink}}
+				{{#navLink "/htmlDemo"}}HTML Demo{{/navLink}}
 			</ul>
 			<ul class="navbar-nav ml-auto">
-				<li class="nav-item"><a class="nav-link" href="/blog">Blog</a></li>
-				<li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+				{{#navLink "/students"}}Students{{/navLink}}
+				{{#navLink "/courses"}}Courses{{/navLink}}
+				{{#navLink "/students/add"}}Add Student{{/navLink}}
 			</ul>
 		</div>
 	</nav>
 
 	<div class="container">
-		<div class="row">
-			<main class="col-md-12">
-				<h1>Welcome to My Personal Website!</h1>
-				<p>Explore my world of creativity and innovation.</p>
-				<h2>About Me</h2>
-				<p>My name is Utkarsh Sharma, a passionate student of Business Information Technology at Seneca College. Join me on this exciting journey as I learn, create, and share my projects and experiences.</p>
-				<h2>Get in Touch</h2>
-				<p>Want to collaborate, discuss ideas, or have any questions? Feel free to reach out to me through the contact page. I'm always excited to connect with like-minded individuals!</p>
-			</main>
-		</div>
+		{{{body}}}
 	</div>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

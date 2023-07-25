@@ -13,7 +13,6 @@ let dataCollection = null;
 // Initialize the data
 function initialize() {
   return new Promise((resolve, reject) => {
-
     // Read the file students.json
     fs.readFile('./data/students.json', 'utf8', (err, studentDataFromFile) => {
       if (err) {
@@ -35,6 +34,21 @@ function initialize() {
 
         resolve();
       });
+    });
+  });
+}
+
+// Add this function to write data to the students.json file
+function writeStudentDataToFile() {
+  return new Promise((resolve, reject) => {
+    const jsonData = JSON.stringify(dataCollection.students, null, 2);
+
+    fs.writeFile('./data/students.json', jsonData, (err) => {
+      if (err) {
+        reject("Error writing student data to file: " + err);
+      } else {
+        resolve();
+      }
     });
   });
 }
@@ -92,7 +106,10 @@ function getStudentsByCourse(course) {
 // Create a function to get a student by student number
 function getStudentByNum(num) {
   return new Promise((resolve, reject) => {
-    const student = dataCollection.students.find(student => student.studentNum === num);
+    // Convert num to integer
+    const studentNum = parseInt(num);
+
+    const student = dataCollection.students.find(student => student.studentNum === studentNum);
 
     if (student) {
       resolve(student);
@@ -115,7 +132,62 @@ function addStudent(studentData) {
 
     dataCollection.students.push(studentData);
 
-    resolve(studentData);
+    // Save the changes to the file
+    writeStudentDataToFile()
+      .then(() => {
+        resolve(studentData);
+      })
+      .catch(err => {
+        reject("Error adding student: " + err);
+      });
+  });
+}
+
+// Create the updateStudent function
+function updateStudent(studentData) {
+  return new Promise((resolve, reject) => {
+    // Convert studentNum to integer
+    const studentNum = parseInt(studentData.studentNum);
+
+    // Find the student with matching studentNum
+    const studentToUpdate = dataCollection.students.find(student => student.studentNum === studentNum);
+
+    if (studentToUpdate) {
+      // Update the properties with the new data
+      studentToUpdate.firstName = studentData.firstName;
+      studentToUpdate.lastName = studentData.lastName;
+      studentToUpdate.email = studentData.email;
+      studentToUpdate.addressStreet = studentData.addressStreet;
+      studentToUpdate.addressCity = studentData.addressCity;
+      studentToUpdate.addressProvince = studentData.addressProvince;
+      studentToUpdate.TA = !!studentData.TA; // Convert to boolean
+      studentToUpdate.status = studentData.status;
+      studentToUpdate.course = studentData.course;
+
+      // Save the changes to the file
+      writeStudentDataToFile()
+        .then(() => {
+          resolve();
+        })
+        .catch(err => {
+          reject("Error updating student: " + err);
+        });
+    } else {
+      reject("Student not found");
+    }
+  });
+}
+
+// Create a function to get a course by courseId
+function getCourseById(id) {
+  return new Promise((resolve, reject) => {
+    const course = dataCollection.courses.find(course => course.courseId === id);
+
+    if (course) {
+      resolve(course);
+    } else {
+      reject("No results returned");
+    }
   });
 }
 
@@ -127,5 +199,7 @@ module.exports = {
   getCourses,
   getStudentsByCourse,
   getStudentByNum,
-  addStudent
+  addStudent,
+  getCourseById,
+  updateStudent
 };
