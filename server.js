@@ -1,15 +1,3 @@
-/***************************
-* WEB700 – Assignment 05
-* I declare that this assignment is my own work in accordance with Seneca Academic Policy. No part 
-* of this assignment has been copied manually or electronically from any other source 
-* (including 3rd party web sites) or distributed to other students.
-* 
-* Name: UTKARSH SHARMA Student ID: 135814226 Date: July 24, 2023
-*
-* Online (Cyclic) Link: https://uninterested-tan-yoke.cyclic.app
-*
-****************************/
-
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -37,28 +25,21 @@ const exphbs = require("express-handlebars").create({
 const app = express();
 const HTTP_PORT = process.env.PORT || 8080;
 
-// Middleware to parse JSON data
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Middleware to serve static files from the "public" folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// Set the 'view engine' to use "express-handlebars"
 app.engine("hbs", exphbs.engine);
 app.set("view engine", "hbs");
 
-// Middleware to highlight the correct navigation item
 app.use(function(req, res, next) {
   let route = req.path.substring(1);
   app.locals.activeRoute = "/" + (isNaN(route.split('/')[1]) ? route.replace(/\/(?!.*)/, "") : route.replace(/\/(.*)/, ""));
   next();
 });
 
-// Route to get all students or students by course
 app.get("/students", (req, res) => {
   const course = req.query.course;
-  console.log(course);
   if (course) {
     collegeData
       .getStudentsByCourse(parseInt(course))
@@ -69,12 +50,17 @@ app.get("/students", (req, res) => {
   } else {
     collegeData
       .getAllStudents()
-      .then((students) => res.render("students", { layout: "main", students: students }))
-      .catch(() => res.render("students", { layout: "main", message: "no results" }));
+      .then((students) => {
+        if (students.length > 0) {
+          res.render("students", { layout: "main", students: students });
+        } else {
+          res.render("students", { layout: "main", message: "No students available." });
+        }
+      })
+      .catch(() => res.render("students", { layout: "main", message: "No students available." }));
   }
 });
 
-// Route to get all courses
 app.get("/courses", (req, res) => {
   collegeData
     .getCourses()
@@ -88,7 +74,6 @@ app.get("/courses", (req, res) => {
     .catch(() => res.render("courses", { layout: "main", message: "No courses available." }));
 });
 
-// Route to get a specific course by courseId and render the course view
 app.get("/course/:id", (req, res) => {
   const courseId = parseInt(req.params.id);
   collegeData
@@ -97,36 +82,63 @@ app.get("/course/:id", (req, res) => {
     .catch(() => res.status(404).send("Course Not Found"));
 });
 
-// Route to get a student by student number and render the student view
 app.get("/student/:studentNum", (req, res) => {
   const studentNum = parseInt(req.params.studentNum);
+  let viewData = {};
+  
   collegeData
     .getStudentByNum(studentNum)
-    .then((student) => res.render("student", { layout: "main", student: student }))
-    .catch(() => res.status(404).send("Student Not Found"));
+    .then((student) => {
+      viewData.student = student;
+    })
+    .catch(() => {
+      viewData.student = null;
+    })
+    .then(collegeData.getCourses)
+    .then((courses) => {
+      viewData.courses = courses;
+      
+      if (viewData.student) {
+        viewData.courses.forEach((course) => {
+          if (course.courseId === viewData.student.course) {
+            course.selected = true;
+          }
+        });
+      }
+    })
+    .catch(() => {
+      viewData.courses = [];
+    })
+    .then(() => {
+      if (!viewData.student) {
+        res.status(404).send("Student Not Found");
+      } else {
+        res.render("student", { layout: "main", viewData: viewData });
+      }
+    });
 });
 
-// Route to serve home.hbs
 app.get("/", (req, res) => {
   res.render("home", { layout: "main" });
 });
 
-// Route to serve about.hbs
 app.get("/about", (req, res) => {
   res.render("about", { layout: "main" });
 });
 
-// Route to serve htmlDemo.hbs
 app.get("/htmlDemo", (req, res) => {
   res.render("htmlDemo", { layout: "main" });
 });
 
-// Route to serve addStudent.hbs
 app.get("/students/add", (req, res) => {
-  res.render("addStudent", { layout: "main" });
+  collegeData
+    .getCourses()
+    .then((courses) => {
+      res.render("addStudent", { layout: "main", courses: courses });
+    })
+    .catch(() => res.render("addStudent", { layout: "main", courses: [] }));
 });
 
-// Route to add a new student
 app.post("/students/add", (req, res) => {
   const newStudent = req.body;
   collegeData
@@ -137,38 +149,94 @@ app.post("/students/add", (req, res) => {
     .catch(() => res.json({ message: "Failed to add student" }));
 });
 
-// Route to update a student
 app.post("/student/update", (req, res) => {
   const updatedStudent = req.body;
-
-  // Log the data received from the form submission for debugging
   console.log("Received data from the form submission:");
   console.log(updatedStudent);
-
   collegeData
     .updateStudent(updatedStudent)
     .then(() => {
-      // Log a success message for debugging
       console.log("Student updated successfully.");
       res.redirect("/students");
     })
     .catch((err) => {
-      // Log the error message for debugging
       console.error("Error updating student:", err);
       res.status(404).send("Student Not Found");
     });
 });
 
-// 404 error message
+app.get("/courses/add", (req, res) => {
+  res.render("addCourse", { layout: "main" });
+});
+
+app.post("/courses/add", (req, res) => {
+  const newCourse = req.body;
+  collegeData
+    .addCourse(newCourse)
+    .then(() => {
+      res.redirect("/courses");
+    })
+    .catch(() => res.json({ message: "Failed to add course" }));
+});
+
+app.post("/course/update", (req, res) => {
+  const updatedCourse = req.body;
+  collegeData
+    .updateCourse(updatedCourse)
+    .then(() => {
+      res.redirect("/courses");
+    })
+    .catch((err) => {
+      console.error("Error updating course:", err);
+      res.status(404).send("Course Not Found");
+    });
+});
+
+app.get("/course/:id", (req, res) => {
+  const courseId = parseInt(req.params.id);
+  collegeData
+    .getCourseById(courseId)
+    .then((course) => {
+      if (course) {
+        res.render("course", { layout: "main", course: course });
+      } else {
+        res.status(404).send("Course Not Found");
+      }
+    })
+    .catch((err) => {
+      console.error("Error getting course:", err);
+      res.status(500).send("Server Error");
+    });
+});
+
+app.get("/course/delete/:id", (req, res) => {
+  const courseId = parseInt(req.params.id);
+  collegeData
+    .deleteCourseById(courseId)
+    .then(() => {
+      res.redirect("/courses");
+    })
+    .catch(() => res.status(500).send("Unable to Remove Course / Course not found"));
+});
+
+// New route for deleting students
+app.get("/student/delete/:studentNum", (req, res) => {
+  const studentNum = parseInt(req.params.studentNum);
+  collegeData
+    .deleteStudentByNum(studentNum)
+    .then(() => {
+      res.redirect("/students");
+    })
+    .catch(() => res.status(500).send("Unable to Remove Student / Student not found"));
+});
+
 app.use((req, res) => {
   res.status(404).send("Page Not Found");
 });
 
-// Initializing the collegeData module
 collegeData
   .initialize()
   .then(() => {
-    // Start the server
     app.listen(HTTP_PORT, () => {
       console.log("Server listening on port: " + HTTP_PORT);
     });

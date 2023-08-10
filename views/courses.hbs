@@ -9,6 +9,7 @@
           <tr>
             <th>Course Code</th>
             <th>Course Description</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -16,6 +17,9 @@
           <tr>
             <td><a href="/course/{{courseId}}">{{courseCode}}</a></td>
             <td><a href="/students?course={{courseId}}">{{courseDescription}}</a></td>
+            <td>
+              <a class="btn btn-danger" href="/course/delete/{{courseId}}">remove</a>
+            </td>
           </tr>
           {{/each}}
         </tbody>
